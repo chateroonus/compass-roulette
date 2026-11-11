@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#102c35"><title>Compass Roulette — Follow the Threads</title>
+<style>
+:root{font-family:Georgia,serif;color:#f5f0e5;background:#102c35}*{box-sizing:border-box}body{margin:0}main{max-width:680px;margin:auto;padding:22px 18px 70px}h1{font-size:clamp(30px,8vw,50px);margin:5px 0 2px}p{line-height:1.55}.eyebrow{letter-spacing:.18em;text-transform:uppercase;color:#c6b184;font:12px system-ui}small,.muted{color:#b6c8c7}.panel{background:#1c3a43;border:1px solid #47646b;border-radius:18px;padding:18px;margin-top:17px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.pill{border:1px solid #d4b66e;color:#f5dfab;border-radius:99px;padding:7px 10px;font:12px system-ui}.compass{display:block;margin:12px auto;width:min(75vw,280px);height:auto;filter:drop-shadow(0 4px 15px #0005)}input[type=range]{width:100%;accent-color:#d8b66b;touch-action:pan-y}button{font:700 16px system-ui;min-height:50px;border-radius:12px;border:0;padding:12px 16px;cursor:pointer}button.primary{background:#e4c77f;color:#182c30;width:100%;margin-top:15px}button.secondary{background:transparent;color:#f7e5bb;border:1px solid #9a895e}button:disabled{opacity:.45}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.coords{font:13px ui-monospace,monospace;overflow-wrap:anywhere}ol{padding-left:23px;line-height:1.7}li{margin:7px 0}strong{color:#f4db9d}.warning{border-left:3px solid #d8b66b;padding-left:12px;color:#e7d9b9;font:13px/1.5 system-ui}#error{color:#ffc2c2}svg text{font:12px system-ui;fill:#f8e5ad}footer{margin-top:30px;color:#a8b7b7;font:12px system-ui}</style></head>
+<body><main><div class="eyebrow">Follow the Threads · Field games</div><h1>Compass Roulette 🥾</h1><p class="muted">One explorer. Two ambitions. Twelve miles at a time.</p>
+<div class="top"><span class="pill" id="turn">Your turn</span><button class="secondary" id="reset" type="button">New game</button></div>
+<section class="panel"><div class="eyebrow">The compass</div>
+<svg class="compass" viewBox="0 0 300 300" role="img" aria-label="Compass rose showing selected bearing">
+<circle cx="150" cy="150" r="138" fill="#132f38" stroke="#bd9f60" stroke-width="3"/><circle cx="150" cy="150" r="115" fill="none" stroke="#66858a"/><path d="M150 25V275M25 150H275M62 62L238 238M238 62L62 238" stroke="#4e7075" stroke-width="1.5"/><text x="150" y="18" text-anchor="middle">N</text><text x="285" y="154" text-anchor="middle">E</text><text x="150" y="294" text-anchor="middle">S</text><text x="15" y="154" text-anchor="middle">W</text>
+<g id="needle"><path d="M150 37L166 150L150 139L134 150Z" fill="#e7c678"/><path d="M150 263L166 150L150 161L134 150Z" fill="#e5eee9"/></g><circle cx="150" cy="150" r="8" fill="#f4dfaa"/></svg>
+<div class="top"><label for="bearing">Your bearing</label><strong id="bearingText">0° · North</strong></div>
+<input id="bearing" type="range" min="0" max="359" step="1" value="0" aria-label="Choose compass bearing"/>
+<button class="primary" id="move" type="button">Travel 12 miles →</button>
+<div class="actions"><button class="secondary" id="north" type="button">Aim North</button><button class="secondary" id="random" type="button">Spin compass</button></div>
+</section>
+<section class="panel"><div class="eyebrow">The explorer</div><h2 id="position">Monkseaton, England</h2><p class="coords" id="coords">55.0420° N, 1.4590° W</p><p id="status" aria-live="polite">You are aiming for the North Pole. The computer is aiming for the Faroe Islands.</p><p class="warning">Engineering preview: moves use spherical great-circle calculations. Exact coastline detection and the mandatory first-landfall sea rule are <b>not yet implemented</b>. Sea endpoints are not treated as valid final landings. This is a movement-and-controls test.</p></section>
+<section class="panel"><div class="eyebrow">Field journal</div><ol id="journal"><li>Expedition begins at Monkseaton.</li></ol></section>
+<p id="error" role="alert"></p><footer>Compass Roulette · Experimental build 0.1 · A Follow the Threads adventure</footer>
+</main>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const start={lat:55.042,lon:-1.459},faroe={lat:62.0079,lon:-6.7900};
+let position={...start},turn=0,history=[];
+const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
+const wrap=x=>((x+540)%360)-180;
+function destination(p,bearing,km){const d=km/6371.0088,lat1=rad(p.lat),lon1=rad(p.lon),b=rad(bearing);const lat2=Math.asin(Math.sin(lat1)*Math.cos(d)+Math.cos(lat1)*Math.sin(d)*Math.cos(b));const lon2=lon1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(lat1),Math.cos(d)-Math.sin(lat1)*Math.sin(lat2));return {lat:deg(lat2),lon:wrap(deg(lon2))};}
+function bearingTo(a,b){const la=rad(a.lat),lb=rad(b.lat),dl=rad(b.lon-a.lon);return (deg(Math.atan2(Math.sin(dl)*Math.cos(lb),Math.cos(la)*Math.sin(lb)-Math.sin(la)*Math.cos(lb)*Math.cos(dl)))+360)%360;}
+function direction(n){const names=['North','NE','East','SE','South','SW','West','NW'];return names[Math.round(n/45)%8];}
+function format(p){return Math.abs(p.lat).toFixed(4)+'° '+(p.lat>=0?'N':'S')+', '+Math.abs(p.lon).toFixed(4)+'° '+(p.lon>=0?'E':'W');}
+function update(){const b=Number($('bearing').value);$('bearingText').textContent=b+'° · '+direction(b);$('needle').setAttribute('transform','rotate('+b+' 150 150)');$('coords').textContent=format(position);$('turn').textContent=turn%2===0?'Your turn':'Computer turn';$('move').disabled=turn%2!==0;$('bearing').disabled=turn%2!==0;}
+function log(message){history.unshift(message);$('journal').replaceChildren();history.forEach(s=>{const li=document.createElement('li');li.textContent=s;$('journal').appendChild(li);});}
+function move(b,who){position=destination(position,b,19.312128);turn++;$('position').textContent='Expedition position';log(who+' travelled 12 miles at '+Math.round(b)+'°. '+format(position)+'.');$('status').textContent='Move '+turn+': '+who+' reached '+format(position)+'. Coastline/sea rule awaiting implementation.';update();}
+function player(){if(turn%2!==0)return;move(Number($('bearing').value),'You');$('status').textContent+=' Computer is calculating its next bearing…';window.setTimeout(()=>{try{const b=bearingTo(position,faroe);move(b,'Computer');}catch(e){$('error').textContent='Computer move error: '+e.message;}},550);}
+function reset(){position={...start};turn=0;history=[];$('bearing').value='0';$('position').textContent='Monkseaton, England';$('status').textContent='New expedition! You aim for the North Pole; the computer aims for the Faroe Islands.';log('Expedition begins at Monkseaton.');update();}
+$('bearing').addEventListener('input',update);
+$('north').addEventListener('click',()=>{$('bearing').value='0';update();});
+$('random').addEventListener('click',()=>{$('bearing').value=String(Math.floor(Math.random()*360));update();});
+$('move').addEventListener('click',player);
+$('reset').addEventListener('click',reset);
+reset();
+})();
+</script></body></html>
