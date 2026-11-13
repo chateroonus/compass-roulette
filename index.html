@@ -184,4 +184,4 @@ $('discoveryTell').addEventListener('click',()=>{if(activeDiscovery){chatSay(act
 $('discoverySkip').addEventListener('click',()=>{$('discovery').hidden=true;chatSay('Very well! The compass awaits. 🧭');});
 try{initMap();}catch(e){$('error').textContent='Map startup issue: '+e.message;}try{reset();}catch(e){$('error').textContent='Game startup issue: '+e.message;console.error(e);$('move').disabled=false;$('random').disabled=false;$('north').disabled=false;}loadLand();try{checkDiscoveries(position);}catch(e){console.error(e);}
 })();
-</script></body></html>
+</script><script src="./disco-compass.js" defer></script></body></html>
