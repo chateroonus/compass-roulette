@@ -161,7 +161,7 @@ function move(b,who){
  if(bot){botPosition=next;botSeaLandings=count;}else{position=next;seaLandings=count;}const goal=raceGoal;const gained=penalty?0:(!bot&&!goal?Math.round(distanceKm(previous,next)/1.609344):Math.max(0,Math.round((distanceKm(previous,goal)-distanceKm(next,goal))/1.609344)));const change=gained-(penalty?10:0);if(bot)botPoints+=change;else playerPoints+=change;
  $('seaCount').textContent='Sea landings — You: '+seaLandings+'/4 · Little Boots: '+botSeaLandings+'/4';
  if(!bot){$('seaAdvice').textContent=penalty?'🌊 Fourth consecutive sea landing! Returned to your previous position. Choose a fresh bearing next turn.':result.sea?'🌊 You landed at sea ('+seaLandings+' of 4). Next turn, steer in ANY direction with the slider or try Lucky Dip. Four consecutive sea landings trigger a penalty.':'🏝️ Land reached! Your sea streak is cleared. Choose your next bearing or try Lucky Dip.';}animateRoute(previous,next,who);turn++;if(bot)botTurns++;else playerTurns++;
- updateScores();coinCollect(next,who);if(!gameWon&&distanceKm(next,goal)<=10&&(bot?botCoins:playerCoins)>=coinsToWin){gameWon=true;$('eventTitle').textContent='🏆 '+who+' wins the Compass Cup!';$('eventText').textContent='Destination reached! Start a new expedition for another race.';$('eventCard').hidden=false;}if(turn%4===0&&!penalty)surprise();
+ updateScores();coinCollect(next,who);if(!gameWon&&distanceKm(next,goal)<=10&&(bot?botCoins:playerCoins)>=coinsToWin){gameWon=true;window.dispatchEvent(new CustomEvent('disco-compass-victory',{detail:{winner:who}}));$('eventTitle').textContent='🏆 '+who+' wins the Compass Cup!';$('eventText').textContent='Destination reached! Start a new expedition for another race.';$('eventCard').hidden=false;}if(turn%4===0&&!penalty)surprise();
  log(who+' headed '+direction(b)+'. '+(penalty?'Fourth sea landing penalty!':result.note));
  $('status').textContent=bot?'Little Boots has moved independently. Your turn!':'Your expedition has moved. Little Boots is next!';
  update();
@@ -251,6 +251,23 @@ async function start(){
  if(clock)clearInterval(clock);tick();clock=setInterval(tick,70);
  }catch(e){label.textContent='Audio unavailable';}
 }
+window.addEventListener('disco-compass-victory',()=>{
+ if(!enabled||!ctx||!master)return;
+ if(clock){clearInterval(clock);clock=null;}
+ const start=ctx.currentTime;
+ master.gain.cancelScheduledValues(start);
+ master.gain.setValueAtTime(.0001,start);
+ label.textContent='🏆 VICTORY!';
+ const notes=[392,523.25,659.25,783.99,1046.5,783.99,1046.5];
+ notes.forEach((f,i)=>sound(f,.19,'triangle',.13,start+.52+i*.16));
+ [0,.32,.64,1.04].forEach((d,i)=>sound(98,.16,'sine',.17,start+.52+d,45));
+ noise(start+1.65,.24,.085,5000);
+ setTimeout(()=>{
+  if(!enabled||!ctx)return;
+  beat=0;next=ctx.currentTime+.08;started=performance.now();intensity=0;
+  tick();clock=setInterval(tick,70);
+ },2300);
+});
 button.addEventListener('click',()=>enabled?stop():start());
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&enabled)stop();});
 window.addEventListener('pagehide',stop);
